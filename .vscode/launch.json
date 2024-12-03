@@ -36,7 +36,7 @@
             "type": "debugpy",
             "request": "launch",
             "args" : [],
-            "program": "${workspaceFolder}/envs/default_drone_test.py",
+            "program": "${workspaceFolder}/scripts/drone_env_test.py",
             "console": "integratedTerminal"
         }
     ]
