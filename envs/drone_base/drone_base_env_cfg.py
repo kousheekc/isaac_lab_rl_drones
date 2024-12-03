@@ -9,12 +9,12 @@ from omni.isaac.lab.managers import RewardTermCfg as RewTerm
 from omni.isaac.lab.managers import TerminationTermCfg as DoneTerm
 from omni.isaac.lab.utils import configclass
 
-import envs.mdp as mdp
+import envs.drone_base.mdp as mdp
 
-from assets.CF2X import CF2X_CFG
+from assets.cf2x import CF2X_CFG
 
 @configclass
-class DroneSceneCfg(InteractiveSceneCfg):
+class DroneBaseSceneCfg(InteractiveSceneCfg):
     """Configuration for a drone scene."""
 
     # ground plane
@@ -28,7 +28,7 @@ class DroneSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=2000.0),
     )
 
-    # cartpole
+    # drone
     robot: ArticulationCfg = CF2X_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
 
@@ -36,7 +36,8 @@ class DroneSceneCfg(InteractiveSceneCfg):
 class ActionsCfg:
     """Action specifications for the MDP."""
 
-    joint_effort = mdp.JointVelocityActionCfg(asset_name="robot", joint_names=[".*"], scale=100.0)
+    # joint_effort = mdp.JointVelocityActionCfg(asset_name="robot", joint_names=[".*"], scale=100.0)
+    joint_effort = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=1.0, debug_vis=True)
 
 
 @configclass
@@ -102,11 +103,11 @@ class TerminationsCfg:
 
 
 @configclass
-class DroneEnvCfg(ManagerBasedRLEnvCfg):
+class DroneBaseEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the drone environment."""
 
     # Scene settings
-    scene: DroneSceneCfg = DroneSceneCfg(num_envs=4096, env_spacing=4.0)
+    scene: DroneBaseSceneCfg = DroneBaseSceneCfg(num_envs=4096, env_spacing=4.0)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()

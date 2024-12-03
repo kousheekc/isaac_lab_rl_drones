@@ -4,7 +4,6 @@ from omni.isaac.lab.assets import ArticulationCfg
 
 
 CF2X_CFG = ArticulationCfg(
-    prim_path="{ENV_REGEX_NS}/Robot",
     spawn=sim_utils.UsdFileCfg(
         usd_path="assets/usds/cf2x.usd",
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
@@ -19,12 +18,14 @@ CF2X_CFG = ArticulationCfg(
             sleep_threshold=0.005,
             stabilization_threshold=0.001,
         ),
-        copy_from_source=False,
     ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.5),
         joint_pos={
-            ".*": 0.0,
+            "m1_joint": 0.0,
+            "m2_joint": 0.0,
+            "m3_joint": 0.0,
+            "m4_joint": 0.0,
         },
         joint_vel={
             "m1_joint": 200.0,
@@ -34,8 +35,8 @@ CF2X_CFG = ArticulationCfg(
         },
     ),
     actuators={
-        "dummy": ImplicitActuatorCfg(
-            joint_names_expr=[".*"],
+        "actuator": ImplicitActuatorCfg(
+            joint_names_expr=["m1_joint", "m2_joint", "m3_joint", "m4_joint"],
             stiffness=0.0,
             damping=0.0,
         ),

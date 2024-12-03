@@ -1,9 +1,18 @@
+# Copyright (c) 2022-2024, The Isaac Lab Project Developers.
+# All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+"""This script demonstrates how to run the RL environment for the cartpole balancing task."""
+
+"""Launch Isaac Sim Simulator first."""
+
 import argparse
 
 from omni.isaac.lab.app import AppLauncher
 
 # add argparse arguments
-parser = argparse.ArgumentParser(description="Test on running the drone basic RL environment.")
+parser = argparse.ArgumentParser(description="Tutorial on running the cartpole RL environment.")
 parser.add_argument("--num_envs", type=int, default=16, help="Number of environments to spawn.")
 
 # append AppLauncher cli args
@@ -21,19 +30,16 @@ import torch
 
 from omni.isaac.lab.envs import ManagerBasedRLEnv
 
-from envs.drone_base.drone_base_env_cfg import DroneBaseEnvCfg
+from omni.isaac.lab_tasks.manager_based.classic.cartpole.cartpole_env_cfg import CartpoleEnvCfg
 
 
 def main():
     """Main function."""
     # create environment configuration
-    env_cfg = DroneBaseEnvCfg()
+    env_cfg = CartpoleEnvCfg()
     env_cfg.scene.num_envs = args_cli.num_envs
-    env_cfg.scene.env_spacing = 1.0
     # setup RL environment
     env = ManagerBasedRLEnv(cfg=env_cfg)
-
-    #env.reset()
 
     # simulate physics
     count = 0
@@ -46,11 +52,11 @@ def main():
                 print("-" * 80)
                 print("[INFO]: Resetting environment...")
             # sample random actions
-            joint_angles = torch.randn_like(env.action_manager.action)
+            joint_efforts = torch.zeros_like(env.action_manager.action)
             # step the environment
-            obs, rew, terminated, truncated, info = env.step(joint_angles)
-            # print observations
-            # print(obs)
+            obs, rew, terminated, truncated, info = env.step(joint_efforts)
+            # print current orientation of pole
+            print("[Env 0]: Pole joint: ", obs["policy"][0][1].item())
             # update counter
             count += 1
 

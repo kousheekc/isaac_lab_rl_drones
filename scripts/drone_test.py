@@ -18,7 +18,7 @@ import omni.isaac.lab.sim as sim_utils
 from omni.isaac.lab.assets import Articulation
 from omni.isaac.lab.sim import SimulationContext
 
-from assets.CF2X import CF2X_CFG
+from assets.cf2x import CF2X_CFG
 
 
 def main():
