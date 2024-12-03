@@ -30,6 +30,14 @@
             "args" : ["--task", "Isaac-Reach-Franka-v0", "--num_envs", "32"],
             "program": "${workspaceFolder}/source/standalone/workflows/rsl_rl/play.py",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Test Environment",
+            "type": "debugpy",
+            "request": "launch",
+            "args" : [],
+            "program": "${workspaceFolder}/envs/default_drone_test.py",
+            "console": "integratedTerminal"
         }
     ]
 }
