@@ -36,7 +36,6 @@ class DroneBaseSceneCfg(InteractiveSceneCfg):
 class ActionsCfg:
     """Action specifications for the MDP."""
 
-    # joint_effort = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=100.0)
     # thrust_control_action: mdp.ThrustControlActionCfg = mdp.ThrustControlActionCfg(asset_name="robot")
     body_torque_control_action: mdp.BodyTorqueControlActionCfg = mdp.BodyTorqueControlActionCfg(asset_name="robot")
 
@@ -50,8 +49,10 @@ class ObservationsCfg:
         """Observations for policy group."""
 
         # observation terms (order preserved)
-        base_linear_vel = ObsTerm(func=mdp.base_lin_vel)
-        base_angular_vel = ObsTerm(func=mdp.base_ang_vel)
+        base_position = ObsTerm(func=mdp.root_pos_w)
+        base_quaternion = ObsTerm(func=mdp.root_quat_w)
+        base_linear_vel = ObsTerm(func=mdp.root_lin_vel_w)
+        base_angular_vel = ObsTerm(func=mdp.root_ang_vel_w)
 
         def __post_init__(self) -> None:
             self.enable_corruption = False
@@ -92,6 +93,8 @@ class TerminationsCfg:
 
     # (1) Time out
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
+    # (2) Crash with ground
+    crash = DoneTerm(func=mdp.root_height_below_minimum, params={"minimum_height": 0.05})
 
 
 @configclass

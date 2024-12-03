@@ -31,6 +31,7 @@ class ThrustControlAction(ActionTerm):
         self._prop_body_ids = self._robot.find_bodies("m.*_prop")[0]
 
         self._raw_actions = torch.zeros(self.num_envs, self.action_dim, device=self.device)
+        self._processed_actions = torch.zeros_like(self._raw_actions)
 
     """
     Properties.
@@ -46,7 +47,7 @@ class ThrustControlAction(ActionTerm):
 
     @property
     def processed_actions(self) -> torch.Tensor:
-        return self.raw_actions
+        return self._processed_actions
     
     @property
     def has_debug_vis_implementation(self) -> bool:
@@ -58,11 +59,12 @@ class ThrustControlAction(ActionTerm):
 
     def process_actions(self, actions: torch.Tensor):
         self._raw_actions[:] = actions
+        self._processed_actions = self._raw_actions.clamp(0.0, 1.0)
 
     def apply_actions(self):
         forces = torch.zeros(self.num_envs, 4, 3, device=self.device)
         torques = torch.zeros_like(forces)
-        forces[..., 2] = self._raw_actions
+        forces[..., 2] = self._processed_actions
 
         self._robot.set_external_force_and_torque(forces, torques, body_ids=self._prop_body_ids)
         self._robot.update(self._env.physics_dt)

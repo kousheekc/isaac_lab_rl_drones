@@ -31,6 +31,7 @@ class BodyTorqueControlAction(ActionTerm):
         self._body_id = self._robot.find_bodies("body")[0]
 
         self._raw_actions = torch.zeros(self.num_envs, self.action_dim, device=self.device)
+        self._processed_actions = torch.zeros_like(self._raw_actions)
 
     """
     Properties.
@@ -46,7 +47,7 @@ class BodyTorqueControlAction(ActionTerm):
 
     @property
     def processed_actions(self) -> torch.Tensor:
-        return self.raw_actions
+        return self._processed_actions
     
     @property
     def has_debug_vis_implementation(self) -> bool:
@@ -59,12 +60,19 @@ class BodyTorqueControlAction(ActionTerm):
     def process_actions(self, actions: torch.Tensor):
         self._raw_actions[:] = actions
 
+        self._processed_actions[:, :3] = self._raw_actions[:, :3].clamp(-1.0, 1.0)
+        self._processed_actions[:, 3] = self._raw_actions[:, 3].clamp(0.0, 1.0)
+
     def apply_actions(self):
         forces = torch.zeros(self.num_envs, 1, 3, device=self.device)
         torques = torch.zeros_like(forces)
         
-        torques[:, 0, :] = self._raw_actions[:, :3]
-        forces[:, 0, 2] = self._raw_actions[:, 3]
+        torques[:, 0, :] = self._processed_actions[:, :3]
+        forces[:, 0, 2] = self._processed_actions[:, 3]
+
+        print(torques)
+        print(forces)
+        print()
 
         self._robot.set_external_force_and_torque(forces, torques, body_ids=self._body_id)
         self._robot.update(self._env.physics_dt)
