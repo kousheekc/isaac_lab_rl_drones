@@ -22,10 +22,7 @@ CF2X_CFG = ArticulationCfg(
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.5),
         joint_pos={
-            "m1_joint": 0.0,
-            "m2_joint": 0.0,
-            "m3_joint": 0.0,
-            "m4_joint": 0.0,
+            ".*": 0.0,
         },
         joint_vel={
             "m1_joint": 200.0,
@@ -35,8 +32,8 @@ CF2X_CFG = ArticulationCfg(
         },
     ),
     actuators={
-        "actuator": ImplicitActuatorCfg(
-            joint_names_expr=["m1_joint", "m2_joint", "m3_joint", "m4_joint"],
+        "dummy": ImplicitActuatorCfg(
+            joint_names_expr=[".*"],
             stiffness=0.0,
             damping=0.0,
         ),

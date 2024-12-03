@@ -20,7 +20,7 @@ class DroneBaseSceneCfg(InteractiveSceneCfg):
     # ground plane
     ground = AssetBaseCfg(
         prim_path="/World/Ground",
-        spawn=sim_utils.GroundPlaneCfg(size=(100.0, 100.0)),
+        spawn=sim_utils.GroundPlaneCfg(),
     )
     # lights
     dome_light = AssetBaseCfg(
@@ -36,8 +36,8 @@ class DroneBaseSceneCfg(InteractiveSceneCfg):
 class ActionsCfg:
     """Action specifications for the MDP."""
 
-    # joint_effort = mdp.JointVelocityActionCfg(asset_name="robot", joint_names=[".*"], scale=100.0)
-    joint_effort = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=1.0, debug_vis=True)
+    # joint_effort = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=100.0)
+    thrust_control_action: mdp.ThrustControlActionCfg = mdp.ThrustControlActionCfg(asset_name="robot")
 
 
 @configclass
@@ -71,15 +71,6 @@ class EventCfg:
         params={
             "pose_range": {},
             "velocity_range": {},
-        },
-    )
-
-    reset_joints = EventTerm(
-        func=mdp.reset_joints_by_offset,
-        mode="reset",
-        params={
-            "position_range": (0.0, 1.0),
-            "velocity_range": (0.0, 1.0),
         },
     )
 

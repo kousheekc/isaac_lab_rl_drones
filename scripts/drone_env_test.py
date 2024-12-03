@@ -33,7 +33,7 @@ def main():
     # setup RL environment
     env = ManagerBasedRLEnv(cfg=env_cfg)
 
-    #env.reset()
+    env.reset()
 
     # simulate physics
     count = 0
@@ -46,9 +46,10 @@ def main():
                 print("-" * 80)
                 print("[INFO]: Resetting environment...")
             # sample random actions
-            joint_angles = torch.randn_like(env.action_manager.action)
+            thrusts = torch.zeros_like(env.action_manager.action)
+            thrusts[:] = 0.0691
             # step the environment
-            obs, rew, terminated, truncated, info = env.step(joint_angles)
+            obs, rew, terminated, truncated, info = env.step(thrusts)
             # print observations
             # print(obs)
             # update counter
