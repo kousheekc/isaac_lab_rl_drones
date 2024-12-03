@@ -37,7 +37,8 @@ class ActionsCfg:
     """Action specifications for the MDP."""
 
     # joint_effort = mdp.JointPositionActionCfg(asset_name="robot", joint_names=[".*"], scale=100.0)
-    thrust_control_action: mdp.ThrustControlActionCfg = mdp.ThrustControlActionCfg(asset_name="robot")
+    # thrust_control_action: mdp.ThrustControlActionCfg = mdp.ThrustControlActionCfg(asset_name="robot")
+    body_torque_control_action: mdp.BodyTorqueControlActionCfg = mdp.BodyTorqueControlActionCfg(asset_name="robot")
 
 
 @configclass

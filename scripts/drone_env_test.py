@@ -46,8 +46,7 @@ def main():
                 print("-" * 80)
                 print("[INFO]: Resetting environment...")
             # sample random actions
-            thrusts = torch.zeros_like(env.action_manager.action)
-            thrusts[:] = 0.0691
+            thrusts = torch.randn_like(env.action_manager.action)
             # step the environment
             obs, rew, terminated, truncated, info = env.step(thrusts)
             # print observations

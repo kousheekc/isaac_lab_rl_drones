@@ -52,7 +52,7 @@ def main():
                 print("-" * 80)
                 print("[INFO]: Resetting environment...")
             # sample random actions
-            joint_efforts = torch.zeros_like(env.action_manager.action)
+            joint_efforts = torch.randn_like(env.action_manager.action)
             # step the environment
             obs, rew, terminated, truncated, info = env.step(joint_efforts)
             # print current orientation of pole
