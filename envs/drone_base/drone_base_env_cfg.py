@@ -36,8 +36,8 @@ class DroneBaseSceneCfg(InteractiveSceneCfg):
 class ActionsCfg:
     """Action specifications for the MDP."""
 
-    # thrust_control_action: mdp.ThrustControlActionCfg = mdp.ThrustControlActionCfg(asset_name="robot")
-    body_torque_control_action: mdp.BodyTorqueControlActionCfg = mdp.BodyTorqueControlActionCfg(asset_name="robot")
+    thrust_control_action: mdp.ThrustControlActionCfg = mdp.ThrustControlActionCfg(asset_name="robot")
+    # body_torque_control_action: mdp.BodyTorqueControlActionCfg = mdp.BodyTorqueControlActionCfg(asset_name="robot")
 
 
 @configclass
@@ -53,6 +53,7 @@ class ObservationsCfg:
         base_quaternion = ObsTerm(func=mdp.root_quat_w)
         base_linear_vel = ObsTerm(func=mdp.root_lin_vel_w)
         base_angular_vel = ObsTerm(func=mdp.root_ang_vel_w)
+        actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self) -> None:
             self.enable_corruption = False
@@ -85,6 +86,12 @@ class RewardsCfg:
     alive = RewTerm(func=mdp.is_alive, weight=1.0)
     # (2) Failure penalty
     terminating = RewTerm(func=mdp.is_terminated, weight=-2.0)
+    # (3) Penalty for large changes action commands
+    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
+    # (4) Penalty for not remaining flat
+    flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-0.5)
+    # (5) Penatly for moving away from target height
+    base_height_l2 = RewTerm(func=mdp.base_height_l2, weight=-1.0, params={"target_height": 1.0})
 
 
 @configclass

@@ -50,8 +50,7 @@ def main():
             thrusts[:, -1] = 0.28
             # step the environment
             obs, rew, terminated, truncated, info = env.step(thrusts)
-            # print observations
-            # print(obs)
+
             # update counter
             count += 1
 

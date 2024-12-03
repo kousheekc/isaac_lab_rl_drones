@@ -70,10 +70,6 @@ class BodyTorqueControlAction(ActionTerm):
         torques[:, 0, :] = self._processed_actions[:, :3]
         forces[:, 0, 2] = self._processed_actions[:, 3]
 
-        print(torques)
-        print(forces)
-        print()
-
         self._robot.set_external_force_and_torque(forces, torques, body_ids=self._body_id)
         self._robot.update(self._env.physics_dt)
         self._robot.write_data_to_sim()
