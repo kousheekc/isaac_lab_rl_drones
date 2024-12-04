@@ -64,8 +64,6 @@ class ThrustControlAction(ActionTerm):
         self._raw_actions[:] = actions
         self._processed_actions = self._raw_actions.clamp(0.0, self._upper_limit)
 
-        print(self._processed_actions)
-
     def apply_actions(self):
         forces = torch.zeros(self.num_envs, 4, 3, device=self.device)
         torques = torch.zeros_like(forces)
@@ -94,3 +92,5 @@ class ThrustControlActionCfg(ActionTermCfg):
     asset_name: str = MISSING
     """Name of the asset in the environment for which the commands are generated."""
     thrust_weight_ratio: float = 2.0
+    """Thrust to weight ratio of the drone, actions get clipped based on this"""
+
