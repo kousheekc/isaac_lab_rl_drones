@@ -30,6 +30,9 @@ class ThrustControlAction(ActionTerm):
         self._robot: Articulation = env.scene[cfg.asset_name]
         self._prop_body_ids = self._robot.find_bodies("m.*_prop")[0]
 
+        # Mass of one drone * gravity / 4 * thrust to weight ratio
+        self._upper_limit = (self._robot.root_physx_view.get_masses().sum()/self.num_envs) * env.sim._gravity_tensor.norm() / 4.0 * cfg.thrust_weight_ratio
+
         self._raw_actions = torch.zeros(self.num_envs, self.action_dim, device=self.device)
         self._processed_actions = torch.zeros_like(self._raw_actions)
 
@@ -59,7 +62,9 @@ class ThrustControlAction(ActionTerm):
 
     def process_actions(self, actions: torch.Tensor):
         self._raw_actions[:] = actions
-        self._processed_actions = self._raw_actions.clamp(0.0, 1.0)
+        self._processed_actions = self._raw_actions.clamp(0.0, self._upper_limit)
+
+        print(self._processed_actions)
 
     def apply_actions(self):
         forces = torch.zeros(self.num_envs, 4, 3, device=self.device)
@@ -88,3 +93,4 @@ class ThrustControlActionCfg(ActionTermCfg):
     """ Class of the action term."""
     asset_name: str = MISSING
     """Name of the asset in the environment for which the commands are generated."""
+    thrust_weight_ratio: float = 2.0

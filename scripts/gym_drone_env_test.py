@@ -3,7 +3,7 @@ import argparse
 from omni.isaac.lab.app import AppLauncher
 
 # add argparse arguments
-parser = argparse.ArgumentParser(description="Test on running the drone basic RL environment.")
+parser = argparse.ArgumentParser(description="Gymnasium interface of Drone Base Isaac Lab environment.")
 parser.add_argument("--num_envs", type=int, default=16, help="Number of environments to spawn.")
 
 # append AppLauncher cli args
@@ -17,44 +17,37 @@ simulation_app = app_launcher.app
 
 """Rest everything follows."""
 
+import gymnasium as gym
 import torch
 
-from omni.isaac.lab.envs import ManagerBasedRLEnv
-
+import envs.drone_base
 from envs.drone_base.drone_base_env_cfg import DroneBaseEnvCfg
+from omni.isaac.lab_tasks.utils import parse_env_cfg
 
 
 def main():
-    """Main function."""
     # create environment configuration
     env_cfg = DroneBaseEnvCfg()
     env_cfg.scene.num_envs = args_cli.num_envs
     env_cfg.scene.env_spacing = 0.5
-    # setup RL environment
-    env = ManagerBasedRLEnv(cfg=env_cfg)
 
+    # create environment
+    env = gym.make("Isaac-DroneBase-v0", cfg=env_cfg)
+
+    # print info (this is vectorized environment)
+    print(f"[INFO]: Gym observation space: {env.observation_space}")
+    print(f"[INFO]: Gym action space: {env.action_space}")
+    # reset environment
     env.reset()
-
-    # simulate physics
-    count = 0
+    # simulate environment
     while simulation_app.is_running():
+        # run everything in inference mode
         with torch.inference_mode():
-            # reset
-            if count % 300 == 0:
-                count = 0
-                env.reset()
-                print("-" * 80)
-                print("[INFO]: Resetting environment...")
-            # sample random actions
-            thrusts = torch.zeros_like(env.action_manager.action)
-            thrusts[:] = 1.0
-            # step the environment
-            obs, rew, terminated, truncated, info = env.step(thrusts)
+            actions = torch.rand(env.action_space.shape, device=env.unwrapped.device)
+            # apply actions
+            env.step(actions)
 
-            # update counter
-            count += 1
-
-    # close the environment
+    # close the simulator
     env.close()
 
 
