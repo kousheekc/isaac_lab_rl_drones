@@ -1,7 +1,3 @@
-"""
-Drone base environment.
-"""
-
 import gymnasium as gym
 
 from . import agents
