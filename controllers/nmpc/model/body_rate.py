@@ -63,7 +63,7 @@ class NMPCBodyRateController(BaseController):
         self.opti.minimize(cost)
 
         # reference controls (dont change)
-        reference_controls = np.tile(np.array([9.81, 0.0, 0.0, 0.0]), (self.n_p, 1)).T
+        reference_controls = np.tile(np.array([9.81, 0.0, 0.0, 0.0]), (self.n_p, 1)).T # Nominal control for hovering
         self.opti.set_value(self.u_ref, reference_controls)
 
         self.opti.solver("ipopt") # set numerical backend
