@@ -12,18 +12,18 @@ if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
 
 
-class MPCVelocityControlAction(ActionTerm):
-    r"""MPC based velocity control action term.
+class MPCControlAction(ActionTerm):
+    r"""MPC based control action term.
 
-    This action term applies a velocity to the body frame.
-    The raw actions correspond to vx, vy, vz, w in the body frame of the drone.
+    This action term applies a reference trajectory to the body frame.
+    The raw actions correspond to reference trajectory (pos, ori, lin_vel, ang_vel x N) in the body frame of the drone.
 
     """
 
-    cfg: MPCVelocityControlActionCfg
+    cfg: MPCControlActionCfg
     """The configuration of the action term."""
 
-    def __init__(self, cfg: MPCVelocityControlActionCfg, env: ManagerBasedRLEnv) -> None:
+    def __init__(self, cfg: MPCControlActionCfg, env: ManagerBasedRLEnv) -> None:
         # initialize the action term
         super().__init__(cfg, env)
 
@@ -82,12 +82,12 @@ class MPCVelocityControlAction(ActionTerm):
 
 
 @configclass
-class MPCVelocityControlActionCfg(ActionTermCfg):
+class MPCControlActionCfg(ActionTermCfg):
     """
-    See :class:`MPCVelocityControlAction` for more details.
+    See :class:`MPCControlAction` for more details.
     """
 
-    class_type: type[ActionTerm] = MPCVelocityControlAction
+    class_type: type[ActionTerm] = MPCControlAction
     """ Class of the action term."""
     asset_name: str = MISSING
     """Name of the asset in the environment for which the commands are generated."""
