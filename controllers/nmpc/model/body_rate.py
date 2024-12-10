@@ -103,28 +103,13 @@ class NMPCBodyRateController(BaseController):
 
         for i in range(self._n):
             new_opti = self.opti.copy()
-            print(self._current_state[i])
-            print(self._control_output[i])
-            print(self._reference_state[i])
-            print()
-            print()
+            
             new_opti.subject_to(self.x[:,0] == self._current_state[i])     # Initial state
             new_opti.subject_to(self.u[:,0] == self._control_output[i])    # Previous control command
             new_opti.set_value(self.x_ref, self._reference_state[i])       # Reference state
             new_opti.set_initial(self.x, 0.0)  # Initial guess
 
             sol = new_opti.solve()             # actual solve
-
-            import matplotlib.pyplot as plt
-            from mpl_toolkits.mplot3d import Axes3D
-            import numpy as np
-
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-
-            ax.plot(sol.value(self.x[0, :]), sol.value(self.x[1, :]), sol.value(self.x[2, :]), label='3D Line Plot', color='blue')
-
-            plt.show()
 
             self._control_output[i] = sol.value(self.u[:, self.n_u-1])
 
