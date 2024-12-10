@@ -1,15 +1,17 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 class BaseController(ABC):
     """
     Abstract base class for drone controllers
     """
 
-    def __init__(self, control_frequency: float, mass: float, moment_of_inertia: dict, thrust_to_weight: float, limit_min: list, limit_max: list, gravity: float):
+    def __init__(self, n: int, control_frequency: float, mass: float, moment_of_inertia: dict, thrust_to_weight: float, limit_min: list, limit_max: list, gravity: float):
         """
         Initialize the base controller with dynamics and core properties.
 
         Args:
+            n (int) : Number of controllers that will run parallely
             control_frequency (float): Control loop frequency in Hz.
             mass (float): Drone's mass in kg.
             moment_of_inertia (dict): Drone's moment of inertia (Ixx, Iyy, Izz).
@@ -18,6 +20,8 @@ class BaseController(ABC):
             limit_max (list): Maximum control limit
             gravity (float): Gravity of the environment
         """
+        self._n = n
+
         # System dynamics properties
         self._mass = mass
         self._moment_of_inertia = moment_of_inertia
@@ -28,20 +32,20 @@ class BaseController(ABC):
         self._control_frequency = control_frequency
         self._limit_min = limit_min
         self._limit_max = limit_max
-        self._current_state = []
-        self._reference_state = []
-        self._control_output = []
+        self._current_state = None
+        self._reference_state = None
+        self._control_output = None
         self._last_timestamp = 0.0
 
     ### --- Core Methods --- ###
     
     @abstractmethod
-    def set_reference(self, reference_state: list):
+    def set_reference(self, reference_state: Any):
         """Set the desired target state for the drone."""
         self._reference_state = reference_state
 
     @abstractmethod
-    def set_current(self, current_state: list):
+    def set_current(self, current_state: Any):
         """Set the current state of the drone."""
         self._current_state = current_state
 
@@ -51,12 +55,13 @@ class BaseController(ABC):
         Compute control based on the current and target states.
 
         Args:
-            timestamp (float): Current time for time-dependent calculations.
+            timestamp (float | None): Current time for time-dependent calculations.
 
         Returns:
             dict: Control outputs (e.g., motor commands, thrust, torques).
         """
-        pass
+        if timestamp is not None:
+            self._last_timestamp = timestamp
 
     @abstractmethod
     def reset(self):

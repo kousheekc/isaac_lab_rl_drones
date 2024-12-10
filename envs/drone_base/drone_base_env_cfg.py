@@ -36,8 +36,9 @@ class DroneBaseSceneCfg(InteractiveSceneCfg):
 class ActionsCfg:
     """Action specifications for the MDP."""
 
-    thrust_control_action: mdp.ThrustControlActionCfg = mdp.ThrustControlActionCfg(asset_name="robot")
+    # thrust_control_action: mdp.ThrustControlActionCfg = mdp.ThrustControlActionCfg(asset_name="robot")
     # body_torque_control_action: mdp.BodyTorqueControlActionCfg = mdp.BodyTorqueControlActionCfg(asset_name="robot")
+    mpc_control_action: mdp.MPCControlActionCfg = mdp.MPCControlActionCfg(asset_name="robot")
 
 
 @configclass

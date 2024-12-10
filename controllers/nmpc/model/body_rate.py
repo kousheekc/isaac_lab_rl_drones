@@ -1,24 +1,28 @@
 from controllers.base_controller import BaseController
 from casadi import *
 import numpy as np
+import torch
+import time
 
 class NMPCBodyRateController(BaseController):
-    def __init__(self, control_frequency: float, mass: float, moment_of_inertia: dict, thrust_to_weight: float, limit_min: list, limit_max: list, gravity: float, prediction_horizon: int, control_horizon: int):
-        super().__init__(control_frequency, mass, moment_of_inertia, thrust_to_weight, limit_min, limit_max, gravity)
+    def __init__(self, n: int, control_frequency: float, mass: float, moment_of_inertia: dict, thrust_to_weight: float, limit_min: list, limit_max: list, gravity: float, prediction_horizon: int, control_horizon: int):
+        super().__init__(n, control_frequency, mass, moment_of_inertia, thrust_to_weight, limit_min, limit_max, gravity)
         
         assert control_horizon < prediction_horizon - 1, f"Control horizon: {control_horizon} muct be smaller than prediction horizon - 1: {prediction_horizon - 1}"  # This will pass
 
         self.dt = 1/self._control_frequency
         self.n_p = prediction_horizon
         self.n_u = control_horizon
+        self.state_dim = 10
+        self.control_dim = 4
 
         self.opti = Opti()
 
-        self.x = self.opti.variable(10, self.n_p+1) # state trajectory
-        self.u = self.opti.variable(4, self.n_p)   # control trajectory
+        self.x = self.opti.variable(self.state_dim, self.n_p+1) # state trajectory
+        self.u = self.opti.variable(self.control_dim, self.n_p)   # control trajectory
 
-        self.x_ref = self.opti.parameter(10, self.n_p+1)  # Reference trajectory
-        self.u_ref = self.opti.parameter(4, self.n_p) # Reference controls
+        self.x_ref = self.opti.parameter(self.state_dim, self.n_p+1)  # Reference trajectory
+        self.u_ref = self.opti.parameter(self.control_dim, self.n_p) # Reference controls
 
         f = lambda x,u: vertcat(
             x[7],
@@ -48,7 +52,7 @@ class NMPCBodyRateController(BaseController):
         self.opti.subject_to(self.opti.bounded(self.limit_min[2], self.u[2, :], self.limit_max[2])) # angular velocity is limited
         self.opti.subject_to(self.opti.bounded(self.limit_min[3], self.u[3, :], self.limit_max[3])) # angular velocity is limited
         self.opti.subject_to(self.x[:,0] == [1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])     # Initial state
-        self.opti.subject_to(self.u[:,0] == [9.81, 0.0, 0.0, 0.0])                                  # Initial state
+        self.opti.subject_to(self.u[:,0] == [9.81, 0.0, 0.0, 0.0])                                  # Initial control
         
         x_weight = diag(MX([100, 100, 100, 10, 10, 10, 10, 10, 10, 10]))  # Weights for state error
         u_weight = diag(MX([0.1, 0.1, 0.1, 0.1]))                         # Weights for control effort
@@ -66,24 +70,48 @@ class NMPCBodyRateController(BaseController):
         reference_controls = np.tile(np.array([9.81, 0.0, 0.0, 0.0]), (self.n_p, 1)).T # Nominal control for hovering
         self.opti.set_value(self.u_ref, reference_controls)
 
-        self.opti.solver("ipopt") # set numerical backend
+        ipopt_options = {
+            'verbose': False,
+            "ipopt.print_level": 0, 
+            "print_time": False
+        }
 
-    def set_current(self, current_state):
-        super().set_current(current_state)
-        self.opti.subject_to(self.x[:,0] == current_state)     # Current state
+        self.opti.solver("ipopt", ipopt_options) # set numerical backend
 
-    def set_reference(self, reference_state):
-        super().set_reference(reference_state)
-        self.opti.set_value(self.x_ref, self.reference_state)
+        self.reset()
+
+    def reset(self):
+        self._current_state = np.zeros((self._n, self.state_dim))
+        self._reference_state = np.zeros((self._n, self.state_dim, self.n_p+1))
+        self._control_output = np.zeros((self._n, self.control_dim))
+        self._control_output[:, 0] = self._gravity
+
+    def set_current(self, current: np.ndarray|torch.Tensor):
+        assert tuple(current.shape) == tuple(self._current_state.shape), f"Current state provided has shape {current.shape} but required {self._current_state.shape}"
+        self._current_state = np.array(current)
+
+    def set_reference(self, reference: np.ndarray|torch.Tensor):
+        assert tuple(reference.shape) == tuple(self._reference_state.shape), f"Reference provided has shape {reference.shape} but required {self._reference_state.shape}"
+        self._reference_state = reference
 
     def compute_control(self, timestamp = None):
-        self.opti.set_initial(self.x, 0.0)  # Initial guess
-        sol = self.opti.solve()             # actual solve
+        super().compute_control(timestamp)
 
-        self.opti.subject_to(self.u[:,0] == sol.value(self.u[:, self.n_u-1]))
-        self.control_output = sol.value(self.u[:, self.n_u-1])
-
-        return sol.value(self.u[:, 0:self.n_u])
+        assert not(np.all(self._reference_state != 0.0)), f"Reference state not set yet"
+        assert not(np.all(self._current_state != 0.0)), f"Current state not set yet"
 
 
+        for i in range(self._n):
+            new_opti = self.opti.copy()
+
+            new_opti.subject_to(self.x[:,0] == self._current_state[i])     # Initial state
+            new_opti.subject_to(self.u[:,0] == self._control_output[i])    # Previous control command
+            new_opti.set_value(self.x_ref, self._reference_state[i])       # Reference state
+            new_opti.set_initial(self.x, 0.0)  # Initial guess
+
+            sol = new_opti.solve()             # actual solve
+
+            self._control_output[i] = sol.value(self.u[:, self.n_u-1])
+
+        return self._control_output
         
