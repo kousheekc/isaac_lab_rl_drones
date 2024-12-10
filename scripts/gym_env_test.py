@@ -1,5 +1,5 @@
 import argparse
-
+import numpy as np
 from omni.isaac.lab.app import AppLauncher
 
 # add argparse arguments
@@ -46,7 +46,11 @@ def main():
     while simulation_app.is_running():
         # run everything in inference mode
         with torch.inference_mode():
-            actions = torch.rand(env.action_space.shape, device=env.unwrapped.device)
+            a = torch.zeros(10, 21)
+            a[0] = torch.arange(0, 0.21, 0.01)
+            a[3] = 1.0
+            actions = a.unsqueeze(0).repeat(5, 1, 1).reshape(5, 210)
+
             # apply actions
             env.step(actions)
 

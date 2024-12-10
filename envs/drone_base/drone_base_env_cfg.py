@@ -38,7 +38,7 @@ class ActionsCfg:
 
     # thrust_control_action: mdp.ThrustControlActionCfg = mdp.ThrustControlActionCfg(asset_name="robot")
     # body_torque_control_action: mdp.BodyTorqueControlActionCfg = mdp.BodyTorqueControlActionCfg(asset_name="robot")
-    mpc_control_action: mdp.MPCControlActionCfg = mdp.MPCControlActionCfg(asset_name="robot")
+    nmpc_control_action: mdp.NMPCControlActionCfg = mdp.NMPCControlActionCfg(asset_name="robot")
 
 
 @configclass

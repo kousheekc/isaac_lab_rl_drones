@@ -1,8 +1,6 @@
 from controllers.base_controller import BaseController
 from casadi import *
 import numpy as np
-import torch
-import time
 
 class NMPCBodyRateController(BaseController):
     def __init__(self, n: int, control_frequency: float, mass: float, moment_of_inertia: dict, thrust_to_weight: float, limit_min: list, limit_max: list, gravity: float, prediction_horizon: int, control_horizon: int):
@@ -54,7 +52,7 @@ class NMPCBodyRateController(BaseController):
         self.opti.subject_to(self.x[:,0] == [1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])     # Initial state
         self.opti.subject_to(self.u[:,0] == [9.81, 0.0, 0.0, 0.0])                                  # Initial control
         
-        x_weight = diag(MX([100, 100, 100, 10, 10, 10, 10, 10, 10, 10]))  # Weights for state error
+        x_weight = diag(MX([100, 100, 100, 1, 1, 1, 1, 1, 1, 1]))  # Weights for state error
         u_weight = diag(MX([0.1, 0.1, 0.1, 0.1]))                         # Weights for control effort
 
         # Cost function calculations
@@ -71,7 +69,10 @@ class NMPCBodyRateController(BaseController):
         self.opti.set_value(self.u_ref, reference_controls)
 
         ipopt_options = {
-            'verbose': False,
+            'verbose': False, \
+            "ipopt.tol": 1e-4,
+            "ipopt.acceptable_tol": 1e-4,
+            "ipopt.max_iter": 100,
             "ipopt.print_level": 0, 
             "print_time": False
         }
@@ -86,24 +87,27 @@ class NMPCBodyRateController(BaseController):
         self._control_output = np.zeros((self._n, self.control_dim))
         self._control_output[:, 0] = self._gravity
 
-    def set_current(self, current: np.ndarray|torch.Tensor):
+    def set_current(self, current: np.ndarray):
         assert tuple(current.shape) == tuple(self._current_state.shape), f"Current state provided has shape {current.shape} but required {self._current_state.shape}"
-        self._current_state = np.array(current)
+        self._current_state = current
 
-    def set_reference(self, reference: np.ndarray|torch.Tensor):
+    def set_reference(self, reference: np.ndarray):
         assert tuple(reference.shape) == tuple(self._reference_state.shape), f"Reference provided has shape {reference.shape} but required {self._reference_state.shape}"
         self._reference_state = reference
 
     def compute_control(self, timestamp = None):
         super().compute_control(timestamp)
 
-        assert not(np.all(self._reference_state != 0.0)), f"Reference state not set yet"
-        assert not(np.all(self._current_state != 0.0)), f"Current state not set yet"
-
+        assert not((self._reference_state == 0.0).all()), f"Reference state not set yet"
+        assert not((self._current_state == 0.0).all()), f"Current state not set yet"
 
         for i in range(self._n):
             new_opti = self.opti.copy()
-
+            print(self._current_state[i])
+            print(self._control_output[i])
+            print(self._reference_state[i])
+            print()
+            print()
             new_opti.subject_to(self.x[:,0] == self._current_state[i])     # Initial state
             new_opti.subject_to(self.u[:,0] == self._control_output[i])    # Previous control command
             new_opti.set_value(self.x_ref, self._reference_state[i])       # Reference state
@@ -111,7 +115,18 @@ class NMPCBodyRateController(BaseController):
 
             sol = new_opti.solve()             # actual solve
 
+            import matplotlib.pyplot as plt
+            from mpl_toolkits.mplot3d import Axes3D
+            import numpy as np
+
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+
+            ax.plot(sol.value(self.x[0, :]), sol.value(self.x[1, :]), sol.value(self.x[2, :]), label='3D Line Plot', color='blue')
+
+            plt.show()
+
             self._control_output[i] = sol.value(self.u[:, self.n_u-1])
 
-        return self._control_output
+        return self._control_output, sol
         
