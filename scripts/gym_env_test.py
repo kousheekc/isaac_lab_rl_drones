@@ -46,11 +46,9 @@ def main():
     while simulation_app.is_running():
         # run everything in inference mode
         with torch.inference_mode():
-            a = torch.zeros(10, 21)
-            a[0] = torch.arange(0, 0.21, 0.01)
-            a[3] = 1.0
-            actions = a.unsqueeze(0).repeat(5, 1, 1).reshape(5, 210)
-
+            
+            actions = torch.zeros(env.action_space.shape, device=env.unwrapped.device)
+            actions[:, -1] = 9.81*0.0282
             # apply actions
             env.step(actions)
 

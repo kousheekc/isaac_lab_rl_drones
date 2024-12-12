@@ -49,10 +49,10 @@ class NMPCBodyRateController(BaseController):
         self.opti.subject_to(self.opti.bounded(self.limit_min[1], self.u[1, :], self.limit_max[1])) # angular velocity is limited
         self.opti.subject_to(self.opti.bounded(self.limit_min[2], self.u[2, :], self.limit_max[2])) # angular velocity is limited
         self.opti.subject_to(self.opti.bounded(self.limit_min[3], self.u[3, :], self.limit_max[3])) # angular velocity is limited
-        self.opti.subject_to(self.x[:,0] == [1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])     # Initial state
-        self.opti.subject_to(self.u[:,0] == [9.81, 0.0, 0.0, 0.0])                                  # Initial control
+        self.opti.subject_to(self.x[:,0] == [0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])     # Initial state
+        self.opti.subject_to(self.u[:,0] == [9.81*self.mass, 0.0, 0.0, 0.0])                                  # Initial control
         
-        x_weight = diag(MX([100, 100, 100, 1, 1, 1, 1, 1, 1, 1]))  # Weights for state error
+        x_weight = diag(MX([100, 100, 100, 10, 10, 10, 10, 10, 10, 10]))  # Weights for state error
         u_weight = diag(MX([0.1, 0.1, 0.1, 0.1]))                         # Weights for control effort
 
         # Cost function calculations
@@ -65,14 +65,11 @@ class NMPCBodyRateController(BaseController):
         self.opti.minimize(cost)
 
         # reference controls (dont change)
-        reference_controls = np.tile(np.array([9.81, 0.0, 0.0, 0.0]), (self.n_p, 1)).T # Nominal control for hovering
+        reference_controls = np.tile(np.array([9.81*self.mass, 0.0, 0.0, 0.0]), (self.n_p, 1)).T # Nominal control for hovering
         self.opti.set_value(self.u_ref, reference_controls)
 
         ipopt_options = {
-            'verbose': False, \
-            "ipopt.tol": 1e-4,
-            "ipopt.acceptable_tol": 1e-4,
-            "ipopt.max_iter": 100,
+            'verbose': False,
             "ipopt.print_level": 0, 
             "print_time": False
         }
@@ -103,15 +100,26 @@ class NMPCBodyRateController(BaseController):
 
         for i in range(self._n):
             new_opti = self.opti.copy()
-            
+
             new_opti.subject_to(self.x[:,0] == self._current_state[i])     # Initial state
-            new_opti.subject_to(self.u[:,0] == self._control_output[i])    # Previous control command
             new_opti.set_value(self.x_ref, self._reference_state[i])       # Reference state
             new_opti.set_initial(self.x, 0.0)  # Initial guess
 
-            sol = new_opti.solve()             # actual solve
+            try:
+                sol = new_opti.solve()             # actual solve
+                self._control_output[i] = sol.value(self.u[:, self.n_u-1])
 
-            self._control_output[i] = sol.value(self.u[:, self.n_u-1])
+                import matplotlib.pyplot as plt
+                fig = plt.figure()
+                ax = fig.add_subplot(111, projection='3d')
+                ax.plot(sol.value(self.x[0, :]), sol.value(self.x[1, :]), sol.value(self.x[2, :]), label='3D Line Plot', color='blue')
+                plt.show()
 
-        return self._control_output, sol
+                return self._control_output
+            except Exception as e:
+                # Catch any other general exceptions
+                print(f"{new_opti.debug}")
+
+
+
         

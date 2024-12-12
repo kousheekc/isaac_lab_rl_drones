@@ -92,8 +92,6 @@ class NMPCControlAction(ActionTerm):
         torques[:, 0, :] = torch.from_numpy(output[:, 1:4])
         forces[:, 0, 2] = torch.from_numpy(output[:, 0])
 
-        print("Stepped")
-
         self._robot.set_external_force_and_torque(forces, torques, body_ids=self._body_id)
         self._robot.update(self._env.physics_dt)
         self._robot.write_data_to_sim()
