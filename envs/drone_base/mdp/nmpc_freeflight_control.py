@@ -8,7 +8,7 @@ from omni.isaac.lab.assets import Articulation
 from omni.isaac.lab.managers import ActionTerm, ActionTermCfg
 from omni.isaac.lab.utils import configclass
 
-from controllers.nmpc.model.body_rate import NMPCBodyRateController
+from controllers.nmpc_free_flight.controller import NMPCFreeFlightController
 
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
@@ -31,7 +31,7 @@ class NMPCControlAction(ActionTerm):
         self._robot: Articulation = env.scene[cfg.asset_name]
         self._body_id = self._robot.find_bodies("body")[0]
 
-        self.nmpc = NMPCBodyRateController(
+        self.nmpc = NMPCFreeFlightController(
             n=self.num_envs,
             control_frequency=int(1/self._env.step_dt),
             mass=float(self._robot.root_physx_view.get_masses().sum()/self.num_envs),
